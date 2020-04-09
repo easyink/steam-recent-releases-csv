@@ -1,7 +1,8 @@
 # steam-store-search-to-csv
-this is a python script generates a csv of games given a steam store search url.
+This is a python script generates a csv of games given a steam store search url using the Requests python library and BeautifulSoup library.
 
-WHY? Because the Steam API doesn't support the ability to generate a list of recently released games on steam. My solution was to extract the information from their steam search page. The script can support any steam search url with whatever chosen filters applied.
+WHY? Because the Steam API doesn't support the ability to generate a list of recently released games on steam. My solution was to extract the information from their steam search page. 
+However, this script can support any steam search url with whatever chosen filters applied, as long as you replace the url variable.
 
 The uploaded script will filter out games listed without a price, or if it is Free, or Free to Play.
 
