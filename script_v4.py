@@ -27,7 +27,7 @@ def generate_csv(csvname, base_url, numofpages):
                     game_price = discounted.get_text(strip=True) #unfortunately currently gets both original price and discounted price in a joined string. idk how to fix
                 else:
                     game_price = i.find('div', class_='col search_price responsive_secondrow').get_text(strip=True) 
-                if len(game_price) == 0 or game_price == 'Free' or game_price == 'Free to Play': #skips entry if the game is free or not out yet(doesnt have a price)
+                if len(game_price) == 0 or game_price == 'Free' or game_price == 'Free To Play' or game_price == 'Free to Play': #skips entry if the game is free or not out yet(doesnt have a price)
                     continue
                 writecsv.writerow([ game_title , release_date , game_price, url_link ]) #write to csv!!
     print('Generated', csvname)
