@@ -4,7 +4,7 @@ import csv
 from datetime import date
 
 namecsv = 'List of New Games Released ' + str(date.today()) + '.csv'
-url_filter = 'https://store.steampowered.com/search/?sort_by=Released_DESC&category1=998&unvrsupport=401&supportedlang=english&page='
+url_filter = 'https://store.steampowered.com/search/?sort_by=Released_DESC&untags=493&category1=998&unvrsupport=401&supportedlang=english&page='
 pages_to_search = 8
 
 def generate_csv(csvname, base_url, numofpages):
