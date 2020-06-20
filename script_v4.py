@@ -19,14 +19,14 @@ def generate_csv(csvname, base_url, numofpages):
             get_list = soup.find(id = 'search_resultsRows') #narrows it down to the right section
             game_entry = get_list.find_all('a', href=True) #actual list of games 
             for i in game_entry: #iterates per game in current page
-                url_link = i['href']
+                url_link = i['href'].split('?')[0]
                 game_title = i.find('span', class_='title').get_text()
                 release_date = i.find('div', class_='col search_released responsive_secondrow').get_text()
                 if i.find('div', class_= 'col search_price discounted responsive_secondrow'): #if game is discounted
                     discounted = i.find('div', class_= 'col search_price discounted responsive_secondrow')
                     game_price_list = discounted.get_text(strip=True).split("$") #splits the price string in two
-                    game_price = game_price_list[1] #first one is the discounted current price
-                    og_price = game_price_list[2] #second one is the original price
+                    game_price = '$' + game_price_list[1] #first one is the discounted current price
+                    og_price = '$' + game_price_list[2] #second one is the original price
                     discount_percentage = i.find('div', class_='col search_discount responsive_secondrow').get_text(strip=True) #gets the percentage off
                 else:
                     game_price = i.find('div', class_='col search_price responsive_secondrow').get_text(strip=True) 
