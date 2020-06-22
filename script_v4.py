@@ -23,7 +23,7 @@ def generate_csv(filename, base_url, numofpages):
             for i in game_entry: #iterates per game in current page
                 url_link = i['href'].split('?')[0]
                 game_title = i.find('span', class_='title').get_text()
-                release_date = i.find('div', class_='col search_released responsive_secondrow').get_text()
+                release_date = (i.find('div', class_='col search_released responsive_secondrow').get_text()).replace(',','')
                 if i.find('div', class_= 'col search_price discounted responsive_secondrow'): #if game is discounted
                     is_discounted=True
                     discounted = i.find('div', class_= 'col search_price discounted responsive_secondrow')
@@ -41,41 +41,68 @@ def generate_csv(filename, base_url, numofpages):
                     writecsv.writerow([ game_title , release_date , game_price, og_price, is_discounted, discount_percentage, url_link ])
     print('Generated', filename)
 
-def generate_charts(filename):
+def generate_charts(filename,PriceHisto,ReleaseWeek): #chart function
     with open(filename, encoding='utf-8') as f:
         reader = csv.reader(f)
-        header_row = next(reader)
+        next(reader) #skips the header row
+        readfile = list(reader) #crucial to make the csv readable in loops more than once
 
-        current_price = []
-        discounted = []
-        for row in reader:
-            dollar_figure = float(row[2].strip('$'))
-            current_price.append(dollar_figure)
-            if row[4] == 'True':
-                discounted.append(dollar_figure)
-
-        dollar_bins = [0,5,10,15,20,30,40,50,60] #dollar bins
         sns.set(style='darkgrid',font_scale=1,)
-        
-        price_histogram = sns.distplot(current_price,bins=dollar_bins,kde=False,hist=True,color='blue',label='Games')
-        price_histogram.set(xlim=0,xlabel='Price in $USD',ylabel='Number of Games',title=filename.split('.')[0])
 
-        discount_histogram = sns.distplot(discounted,bins=dollar_bins,kde=False,color='green',label='Discounted Games',hist_kws=dict(alpha=1))
-        
-        patches = price_histogram.patches
-        for index, item in enumerate(patches): 
-            height = item.get_height()
-            if index <= 7:
-                price_histogram.text( x=item.get_x()+item.get_width()/2, y=height+1, s=int(height), ha='left')
-            elif height == 0:
-                continue
-            else:
-                price_histogram.text( x=item.get_x()+item.get_width()/2, y=height+1, s=int(height), ha='right')
+        if PriceHisto == True:
+            current_price = []
+            discounted = []
+            dollar_bins = [0,5,10,15,20,30,40,50,60]
 
-        plt.legend()
+            for row in readfile: #iterator for lists 
+                dollar_figure = float(row[2].strip('$')) #gets the dollar values
+                current_price.append(dollar_figure) #puts it in the current_price list
+                if row[4] == 'True': #if flagged as discounted, also puts it into the discount list
+                    discounted.append(dollar_figure)
+            plt.figure()
+            price_histogram = sns.distplot(current_price,bins=dollar_bins,kde=False,hist=True,color='blue',label='Games')
+            price_histogram.set(xlim=0,xlabel='Price in $USD',ylabel='Number of Games',title=filename.split('.')[0])
+            discount_histogram = sns.distplot(discounted,bins=dollar_bins,kde=False,color='green',label='Discounted Games',hist_kws=dict(alpha=1))
+            create_text_over_bars(price_histogram,True)
+            plt.legend()
+
+        if ReleaseWeek == True:
+            dates = []
+
+            for row in readfile:
+                dates.append(int(row[1].split(' ')[1]))
+
+            #gets date bins
+            init_date = dates[0] #gets first date
+            dates_bin = [] 
+            for i in range(9): #generates the days of the previous week
+                next_date = ((init_date+1)- i)
+                dates_bin.insert(0,next_date)
+                print(next_date)
+
+            plt.figure()
+            days_barchart = sns.distplot(dates,bins=dates_bin,kde=False,hist_kws=dict(width=1),color='orange')
+            days_barchart.set(xlim=(dates_bin[0],dates_bin[-1]),xlabel='Current Week',)
+            create_text_over_bars(days_barchart,False)
+            plt.legend()
+
         plt.show()
+        print('Generated Charts')
 
+def create_text_over_bars(distplot,layeredbool):
+    patches = distplot.patches
+    for index, item in enumerate(patches):
+        height = item.get_height()
+        if height == 0:
+            continue
+        if layeredbool is True:
+            if index <= 7:
+                distplot.text(x=item.get_x()+item.get_width()/2, y=height+1, s=int(height), ha='left')
+            else:
+                distplot.text(x=item.get_x()+item.get_width()/2, y=height+1, s=int(height), ha='right')
+        else:
+            distplot.text(x=item.get_x()+item.get_width()/2, y=height+1, s=int(height), ha='center')
 
-#generate_csv(namecsv,url_filter,pages_to_search)
+generate_csv(namecsv,url_filter,pages_to_search)
 
-generate_charts('List of New Games Released 2020-06-21.csv')
+generate_charts(namecsv,True,True)
