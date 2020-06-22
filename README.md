@@ -10,4 +10,4 @@ The uploaded script will filter out games listed without a price, if it is Free,
 It downloads the literal url via Requests and crawls the html using BeautifulSoup. It iterates through a chosen number of pages since the infinite scrolling of the page is not possible with requests.
 
 Seaborn is used in the generate_charts function and reads the csv and will generate a price histogram of all the games released in the past week, and layer another histogram showing how many games are discounted as well.
-It can also generate another histogram showing how many games are rleased per day in the past week.
+It can also generate another histogram showing how many games are released per day in the past week.
