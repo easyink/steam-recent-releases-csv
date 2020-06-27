@@ -49,16 +49,26 @@ def generate_charts(filename,PriceHisto,ReleaseWeek): #chart function
 
         sns.set(style='darkgrid',font_scale=1,)
 
-        if PriceHisto == True:
-            current_price = []
-            discounted = []
-            dollar_bins = [0,5,10,15,20,30,40,50,60]
+        current_price = []
+        discounted = []
+        dollar_bins = [0,5,10,15,20,30,40,50,60]
 
-            for row in readfile: #iterator for lists 
-                dollar_figure = float(row[2].strip('$')) #gets the dollar values
-                current_price.append(dollar_figure) #puts it in the current_price list
-                if row[4] == 'True': #if flagged as discounted, also puts it into the discount list
-                    discounted.append(dollar_figure)
+        today_date = date.today().day #gets first date
+        dates = []
+        dates_bin = list(range( (date.today().day - 7), (date.today().day + 1)))
+
+        for row in readfile: #iterator for lists 
+            if int(row[1].split(' ')[1]) >= (dates_bin[0]):
+                if PriceHisto == True:
+                    dollar_figure = float(row[2].strip('$')) #gets the dollar values
+                    current_price.append(dollar_figure) #puts it in the current_price list
+                    if row[4] == 'True': #if flagged as discounted, also puts it into the discount list
+                        discounted.append(dollar_figure)
+                if ReleaseWeek == True:
+                    dates.append(int(row[1].split(' ')[1]))
+        
+        if PriceHisto == True:
+
             plt.figure()
             price_histogram = sns.distplot(current_price,bins=dollar_bins,kde=False,hist=True,color='blue',label='Games')
             price_histogram.set(xlim=0,xlabel='Price in $USD',ylabel='Number of Games',title=filename.split('.')[0])
@@ -67,18 +77,6 @@ def generate_charts(filename,PriceHisto,ReleaseWeek): #chart function
             plt.legend()
 
         if ReleaseWeek == True:
-            dates = []
-
-            for row in readfile:
-                dates.append(int(row[1].split(' ')[1]))
-
-            #gets date bins
-            init_date = dates[0] #gets first date
-            dates_bin = [] 
-            for i in range(9): #generates the days of the previous week
-                next_date = ((init_date+1)- i)
-                dates_bin.insert(0,next_date)
-                print(next_date)
 
             plt.figure()
             days_barchart = sns.distplot(dates,bins=dates_bin,kde=False,hist_kws=dict(width=1),color='orange')
