@@ -46,8 +46,8 @@ def generate_charts(filename,PriceHisto,ReleaseWeek): #chart function
         reader = csv.reader(f)
         next(reader) #skips the header row
         readfile = list(reader) #crucial to make the csv readable in loops more than once
-
-        sns.set(style='darkgrid',font_scale=1,)
+        daytitle = filename.split('.')[0]
+        sns.set(style='darkgrid',font_scale=1,) #global chart settings
 
         current_price = []
         discounted = []
@@ -55,7 +55,8 @@ def generate_charts(filename,PriceHisto,ReleaseWeek): #chart function
 
         today_date = date.today().day #gets first date
         dates = []
-        dates_bin = list(range( (date.today().day - 7), (date.today().day + 1)))
+        dates_bin = list(range( (today_date - 7), (today_date + 1)))
+        
 
         for row in readfile: #iterator for lists 
             if int(row[1].split(' ')[1]) >= (dates_bin[0]):
@@ -71,36 +72,46 @@ def generate_charts(filename,PriceHisto,ReleaseWeek): #chart function
 
             plt.figure()
             price_histogram = sns.distplot(current_price,bins=dollar_bins,kde=False,hist=True,color='blue',label='Games')
-            price_histogram.set(xlim=0,xlabel='Price in $USD',ylabel='Number of Games',title=filename.split('.')[0])
+            price_histogram.set(xlim=0,xlabel='Price in $USD',ylabel='Number of Games',title=daytitle)
             discount_histogram = sns.distplot(discounted,bins=dollar_bins,kde=False,color='green',label='Discounted Games',hist_kws=dict(alpha=1))
-            create_text_over_bars(price_histogram,True)
+            create_text_over_bars(price_histogram,True,1,True,False)
             plt.legend()
 
         if ReleaseWeek == True:
 
             plt.figure()
             days_barchart = sns.distplot(dates,bins=dates_bin,kde=False,hist_kws=dict(width=1),color='orange')
-            days_barchart.set(xlim=(dates_bin[0],dates_bin[-1]),xlabel='Current Week',)
-            create_text_over_bars(days_barchart,False)
+            days_barchart.set(xlim=(dates_bin[0],dates_bin[-1]),xlabel='Current Week',title=(daytitle + ' over the last week'))
+            create_text_over_bars(days_barchart,False,0.5,True,False)
+            create_text_over_bars(days_barchart, False, 0 , False, True)
             plt.legend()
 
         plt.show()
         print('Generated Charts')
 
-def create_text_over_bars(distplot,layeredbool):
+def create_text_over_bars(distplot,layeredbool,yoffsetdist,print_height_text,print_day_text):
     patches = distplot.patches
+    days_list = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
+
     for index, item in enumerate(patches):
+        centerpos = item.get_x()+item.get_width()/2
         height = item.get_height()
-        if height == 0:
-            continue
-        if layeredbool is True:
-            if index <= 7:
-                distplot.text(x=item.get_x()+item.get_width()/2, y=height+1, s=int(height), ha='left')
+
+        if print_height_text == True:
+            if height == 0:
+                continue
+            if layeredbool is True:
+                if index <= 7:
+                    distplot.text(x=centerpos,y=height+yoffsetdist,s=int(height),ha='left')
+                else:
+                    distplot.text(x=centerpos,y=height+yoffsetdist,s=int(height),ha='right')
             else:
-                distplot.text(x=item.get_x()+item.get_width()/2, y=height+1, s=int(height), ha='right')
-        else:
-            distplot.text(x=item.get_x()+item.get_width()/2, y=height+1, s=int(height), ha='center')
+                distplot.text(x=centerpos,y=height+yoffsetdist,s=int(height),ha='center')
+        elif print_day_text == True:
+            day_of_week = (days_list[date(date.today().year,date.today().month,int(item.get_x())).weekday()])
+            distplot.text(x=centerpos,y=0,s=day_of_week,ha='center',fontsize='small')
+            
 
-generate_csv(namecsv,url_filter,pages_to_search)
+#generate_csv(namecsv,url_filter,pages_to_search)
 
-generate_charts(namecsv,True,True)
+generate_charts(namecsv,PriceHisto=True,ReleaseWeek=True)
