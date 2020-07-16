@@ -1,13 +1,14 @@
 from bs4 import BeautifulSoup
 import requests
 import csv
-from datetime import date
+from datetime import date,timedelta
 import seaborn as sns
 import matplotlib.pyplot as plt
+import pandas as pd
 
 namecsv = 'List of New Games Released ' + str(date.today()) + '.csv'
 url_filter = 'https://store.steampowered.com/search/?sort_by=Released_DESC&untags=493&category1=998&unvrsupport=401&supportedlang=english&page='
-pages_to_search = 8
+pages_to_search = 2
 
 def generate_csv(filename, base_url, numofpages):
     with open(filename, 'w', encoding='utf-8', newline='') as csvfile:
@@ -46,18 +47,35 @@ def generate_charts(filename,PriceHisto,ReleaseWeek): #chart function
         reader = csv.reader(f)
         next(reader) #skips the header row
         readfile = list(reader) #crucial to make the csv readable in loops more than once
-        daytitle = filename.split('.')[0]
+        daytitle = filename.split('.')[0] + ' over the last week'
         sns.set(style='darkgrid',font_scale=1,) #global chart settings
+
+        file_date = date( int(daytitle.split(' ')[5] .split('-')[0]) , int(daytitle.split(' ')[5] .split('-')[1]) , int(daytitle.split(' ')[5] .split('-')[2]) ) #shit ass mess
 
         current_price = []
         discounted = []
         dollar_bins = [0,5,10,15,20,30,40,50,60]
 
-        today_date = date.today().day #gets first date
-        dates = []
-        dates_bin = list(range( (today_date - 7), (today_date + 1)))
-        
+        def last_day_of_month(any_day): #taken from stack overflow
+            next_month = any_day.replace(day=28) + timedelta(days=4)  # this will never fail because the resulting date will always land in the next month(i think)
 
+            return ( next_month - timedelta(days=next_month.day) ) .day
+
+        def previous_month(input_date): #adapted from stack overflow as well. Gets the previous month
+            last_month = input_date.replace(day=1) - timedelta(days=1)
+            return last_month.month
+
+        dates = []
+        dates_bin = []
+
+        for x in range( (file_date.day - 7), (file_date.day + 1) ):
+            if x <= 0:
+                print('NEGATIVE, ROLL BACK TO PREVIOUS MONTH')
+                dates_bin.append( last_day_of_month( date(file_date.year, previous_month(file_date), 1) ) - abs(x) )
+            else:
+                dates_bin.append(x)
+        print(dates_bin)
+        
         for row in readfile: #iterator for lists 
             if int(row[1].split(' ')[1]) >= (dates_bin[0]):
                 if PriceHisto == True:
@@ -68,6 +86,10 @@ def generate_charts(filename,PriceHisto,ReleaseWeek): #chart function
                 if ReleaseWeek == True:
                     dates.append(int(row[1].split(' ')[1]))
         
+        plt.figure()
+        #barplottest = sns.barplot(x='Release Date',data=dates,order=dates_bin)
+        #this is some debug shit idk
+
         if PriceHisto == True:
 
             plt.figure()
@@ -81,9 +103,9 @@ def generate_charts(filename,PriceHisto,ReleaseWeek): #chart function
 
             plt.figure()
             days_barchart = sns.distplot(dates,bins=dates_bin,kde=False,hist_kws=dict(width=1),color='orange')
-            days_barchart.set(xlim=(dates_bin[0],dates_bin[-1]),xlabel='Current Week',title=(daytitle + ' over the last week'))
+            days_barchart.set(xlim=(dates_bin[0],dates_bin[-1]),xlabel='Current Week',title=daytitle )
             create_text_over_bars(days_barchart,False,0.5,True,False)
-            create_text_over_bars(days_barchart, False, 0 , False, True)
+            #create_text_over_bars(days_barchart, False, 0 , False, True)
             plt.legend()
 
         plt.show()
@@ -108,10 +130,19 @@ def create_text_over_bars(distplot,layeredbool,yoffsetdist,print_height_text,pri
             else:
                 distplot.text(x=centerpos,y=height+yoffsetdist,s=int(height),ha='center')
         elif print_day_text == True:
-            day_of_week = (days_list[date(date.today().year,date.today().month,int(item.get_x())).weekday()])
+            format_day = int( item.get_x() )
+            
+            day_of_week =days_list
+            [ 
+                date( 
+                    date.today().year , 
+                    date.today().month , 
+                    format_day
+                    )
+                    .weekday()
+            ]
             distplot.text(x=centerpos,y=0,s=day_of_week,ha='center',fontsize='small')
             
 
-#generate_csv(namecsv,url_filter,pages_to_search)
-
+generate_csv(namecsv,url_filter,pages_to_search)
 generate_charts(namecsv,PriceHisto=True,ReleaseWeek=True)
