@@ -36,13 +36,14 @@ def generate_panda_dataframe(data_dict,csv_filename):
     game_df = pd.DataFrame(data=data_dict,)
 
     game_df .to_csv(csv_filename) #writes to csv
+    print('Written to CSV file')
 
 def generate_charts(csvfile,PriceHisto,ReleaseWeek):
     csv_dataframe = pd.read_csv(csvfile,header=0,index_col=False,usecols=['Title of Game','Release Date','Current Price','Original Price','Is Discounted','Discount Percentage','Link To Game'])
     daytitle = csvfile.split('.')[0]
     sns.set(style='darkgrid',font_scale=1,)
     file_date = date( int(daytitle.split(' ')[5] .split('-')[0]) , int(daytitle.split(' ')[5] .split('-')[1]) , int(daytitle.split(' ')[5] .split('-')[2]) ) #shit ass mess
-    
+
     def last_day_of_month(any_day): #taken from stack overflow
         next_month = any_day.replace(day=28) + timedelta(days=4)  # this will never fail because the resulting date will always land in the next month(i think)
         return ( next_month - timedelta(days=next_month.day) ) .day
@@ -52,22 +53,31 @@ def generate_charts(csvfile,PriceHisto,ReleaseWeek):
         return last_month.month
 
     dates_bin = []
-
+    ########is this even used anymore?????
     for x in range( (file_date.day - 7), (file_date.day + 1) ):
         if x <= 0:
             print('NEGATIVE, ROLL BACK TO PREVIOUS MONTH')
-            dates_bin.append( last_day_of_month( date(file_date.year, previous_month(file_date), 1) ) - abs(x) )
+            get_day_of_date = (last_day_of_month( date(file_date.year, previous_month(file_date), 1) ) - abs(x))
+            reordered_date = " ".join( (date(file_date.year, previous_month(file_date), 1 ).strftime("%b") , get_day_of_date, file_date.year) )
         else:
-            dates_bin.append(x)
+            reordered_date = " ".join( ( (file_date.strftime("%b")), str(x) , str(file_date.year) ) )
+        
+        dates_bin.append( reordered_date )
+        print(reordered_date)
+    #print(dates_bin)
 
     plt.figure()
-    barplottest = sns.barplot(x='Release Date',data=csv_dataframe,order=dates_bin)
+    #barplottest = sns.barplot(x='Release Date',y='Title of Game',data=csv_dataframe,)
+    #sns.catplot(x='Release Date',y='Title of Game',kind='bar',data=csv_dataframe)
+    sns.countplot(x='Release Date',data=csv_dataframe,order=dates_bin)
+    plt.show()
 
 game_list = []
 name_csv_string = 'List of New Games Released ' + str(date.today()) + '.csv'
 url_filter = 'https://store.steampowered.com/search/?sort_by=Released_DESC&untags=493&category1=998&unvrsupport=401&supportedlang=english&page='
-pages_to_search = 2 #default is 7 
+pages_to_search = 7 #default is 7 
 
-read_html(filename=name_csv_string,base_url=url_filter,numofpages=pages_to_search)
-generate_panda_dataframe(game_list,name_csv_string)
-#generate_charts(name_csv_string,False,False)
+#read_html(filename=name_csv_string,base_url=url_filter,numofpages=pages_to_search)
+#generate_panda_dataframe(game_list,name_csv_string)
+
+generate_charts(name_csv_string,False,False)
